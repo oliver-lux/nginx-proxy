@@ -1,0 +1,24 @@
+version: '3.9'
+
+networks:
+  default:
+    name: default_network
+
+services:
+
+  nginx-proxy:
+    image: jwilder/nginx-proxy:0.9-alpine
+    ports:
+      - "80:80"
+    volumes:
+      - /var/run/docker.sock:/tmp/docker.sock:ro
+    networks:
+      - default
+
+  whoami:
+    image: jwilder/whoami
+    environment:
+      - VIRTUAL_HOST=whoami.test
+      - VIRTUAL_PORT=8000
+    networks:
+      - default
