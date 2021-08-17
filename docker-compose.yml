@@ -2,29 +2,41 @@ version: '3.9'
 
 networks:
   nginx_proxy:
+    external: true
     name: reverse_proxy
 
 volumes:
-  certs:
+  conf:
+  vhost:
+  html:
   dhparam:
+  certs:
+  acme:
 
 services:
 
   nginx-proxy:
-    image: jwilder/nginx-proxy:0.9-alpine
+    image: nginxproxy/nginx-proxy:alpine
+    container_name: nginx-proxy
     ports:
       - "80:80"
+      - "443:443"
     volumes:
-      - /var/run/docker.sock:/tmp/docker.sock:ro
-      - certs:/etc/nginx/certs:ro
+      - conf:/etc/nginx/conf.d
+      - vhost:/etc/nginx/vhost.d
+      - html:/usr/share/nginx/html
       - dhparam:/etc/nginx/dhparam
+      - certs:/etc/nginx/certs:ro
+      - /var/run/docker.sock:/tmp/docker.sock:ro
     networks:
       - nginx_proxy
 
-  whoami:
-    image: jwilder/whoami
-    environment:
-      - VIRTUAL_HOST=whoami.test
-      - VIRTUAL_PORT=8000
-    networks:
-      - nginx_proxy
+  acme-companion:
+    image: nginxproxy/acme-companion
+    container_name: nginx-proxy-acme
+    volumes_from:
+      - nginx-proxy
+    volumes:
+      - certs:/etc/nginx/certs:rw
+      - acme:/etc/acme.sh
+      - /var/run/docker.sock:/var/run/docker.sock:ro
